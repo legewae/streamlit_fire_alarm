@@ -2,6 +2,5 @@ streamlit
 pandas
 scikit-learn
 lightgbm
-pickle
 matplotlib
 seaborn
