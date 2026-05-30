@@ -6,17 +6,14 @@ import pickle
 from sklearn.preprocessing import StandardScaler
 import lightgbm as lgb
 
-# Настройка широкого формата страницы (опционально)
 st.set_page_config(page_title="Дашборд ML", layout="wide")
 
-# --- БОКОВАЯ ПАНЕЛЬ НАВИГАЦИИ ---
 st.sidebar.title("Навигация")
 page = st.sidebar.radio(
     "Выберите страницу:",
     ("1. О разработчике", "2. Информация о данных", "3. Визуализация данных", "4. Инференс моделей")
 )
 
-# --- СТРАНИЦА 1: О разработчике ---
 if page == "1. О разработчике":
     st.title("Информация о разработчике")
     st.write("**ФИО:** Гришанов Егор Викторович")
@@ -51,7 +48,6 @@ elif page == "2. Информация о данных":
     df = pd.read_csv('data/classification_processed.csv')
     st.dataframe(df)
 
-# --- СТРАНИЦА 3: Визуализация ---
 elif page == "3. Визуализация данных":
     st.title("Визуализация зависимостей")
     st.subheader("Корреляционная матрица признаков расположена ниже:")
