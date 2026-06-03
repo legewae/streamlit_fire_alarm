@@ -139,25 +139,62 @@ elif page == "4. Инференс моделей":
 
 
     st.subheader("Введите параметры датчиков:")
+
+    PRESETS = {
+        "no_fire": {
+            "temp": 13.31, "humidity": 16.49, "tvoc": 18.0, "eco2": 400.0,
+            "raw_h2": 13567.0, "raw_ethanol": 21129.0, "pressure": 936.831,
+            "PM1": 0.84, "PM2_5": 0.87, "NC0_5": 5.77, "NC1_0": 0.9, "NC2_5": 0.02,
+        },
+
+        "fire": {
+            "temp": 26.96, "humidity": 36.02, "tvoc": 2160.0, "eco2": 4788.0,
+            "raw_h2": 12356.0, "raw_ethanol": 18900.0, "pressure": 931.119,
+            "PM1": 1677.9, "PM2_5": 1743.28, "NC0_5": 11548.3, "NC1_0": 1800.824, "NC2_5": 40.674,
+        },
+        "ambiguous": {
+            "temp": -10, "humidity": 100, "tvoc": 60000, "eco2": 60000,
+            "raw_h2": 5000, "raw_ethanol": 30000, "pressure": 800,
+            "PM1": 1000, "PM2_5": 1000, "NC0_5": 30000, "NC1_0": 25000, "NC2_5": 10000,
+        },
+    }
+
+    preset_key = st.session_state.get("preset", None)
+    p = PRESETS.get(preset_key, {})
+
+    btn1, btn2, btn3 = st.columns(3)
+    with btn1:
+        if st.button("Нет пожара (эталон)"):
+            st.session_state["preset"] = "no_fire"
+            st.rerun()
+    with btn2:
+        if st.button("Пожар (эталон)"):
+            st.session_state["preset"] = "fire"
+            st.rerun()
+    with btn3:
+        if st.button("Выброс (модели расходятся)"):
+            st.session_state["preset"] = "ambiguous"
+            st.rerun()
+
     col1, col2, col3 = st.columns(3)
-    
+
     with col1:
-        temp = st.number_input("Temperature [C]", value=20.0)
-        humidity = st.number_input("Humidity [%]", value=50.0)
-        tvoc = st.number_input("TVOC [ppb]", value=0.0)
-        eco2 = st.number_input("eCO2 [ppm]", value=400.0)
-    
+        temp = st.number_input("Temperature [C]", value=p.get("temp", 20.0))
+        humidity = st.number_input("Humidity [%]", value=p.get("humidity", 50.0))
+        tvoc = st.number_input("TVOC [ppb]", value=p.get("tvoc", 0.0))
+        eco2 = st.number_input("eCO2 [ppm]", value=p.get("eco2", 400.0))
+
     with col2:
-        raw_h2 = st.number_input("Raw H2", value=10000.0)
-        raw_ethanol = st.number_input("Raw Ethanol", value=20000.0)
-        pressure = st.number_input("Pressure [hPa]", value=930.0)
-        PM1 = st.number_input("PM1.0")
-        
+        raw_h2 = st.number_input("Raw H2", value=p.get("raw_h2", 10000.0))
+        raw_ethanol = st.number_input("Raw Ethanol", value=p.get("raw_ethanol", 20000.0))
+        pressure = st.number_input("Pressure [hPa]", value=p.get("pressure", 930.0))
+        PM1 = st.number_input("PM1.0", value=p.get("PM1", 0.0))
+
     with col3:
-        PM2_5 = st.number_input("PM2.5")
-        NC0_5 = st.number_input("NC0.5")
-        NC1_0 = st.number_input("NC1.0")
-        NC2_5 = st.number_input("NC2.5")
+        PM2_5 = st.number_input("PM2.5", value=p.get("PM2_5", 0.0))
+        NC0_5 = st.number_input("NC0.5", value=p.get("NC0_5", 0.0))
+        NC1_0 = st.number_input("NC1.0", value=p.get("NC1_0", 0.0))
+        NC2_5 = st.number_input("NC2.5", value=p.get("NC2_5", 0.0))
 
 
     model_choice = st.selectbox("Выберите модель:", ["AdaClassifier(DecisionTreeClassifier)", "Случайный лес", "LGMClassifier", "KNN", "StackingClassifier(RandomF., SVM, KNN)"])
@@ -195,6 +232,19 @@ elif page == "4. Инференс моделей":
                 st.success("ПОЖАРА НЕТ (0)")
         except Exception as e:
             st.error(f"Ошибка при предсказании: {e}")
+
+    st.subheader("Метрики моделей на тестовой выборке (20%)")
+
+    metrics_df = pd.DataFrame({
+        "Модель":    ["KNN", "AdaBoost", "Stacking", "RandomForest", "LightGBM"],
+        "Accuracy":  [0.9989, 0.9867, 0.9919, 0.9272, 0.9032],
+        "Precision": [0.9993, 0.9818, 0.9887, 0.9075, 0.8808],
+        "Recall":    [0.9991, 1.0000, 1.0000, 1.0000, 1.0000],
+        "F1":        [0.9992, 0.9908, 0.9943, 0.9515, 0.9366],
+        "ROC-AUC":   [0.9991, 1.0000, 1.0000, 0.9975, 0.9980],
+    }).set_index("Модель")
+
+    st.dataframe(metrics_df, use_container_width=True)
 
     st.subheader("Загрузите файл для пакетного предсказания")
     uploaded_file = st.file_uploader("Загрузить *.csv", type="csv")
